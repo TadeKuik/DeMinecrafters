@@ -1,0 +1,2432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MC Server Hub</title>
+
+  <!-- Google Fonts: Minecraft-adjacent pixel feel + clean body -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       CSS CUSTOM PROPERTIES (DESIGN TOKENS)
+       ============================================================ */
+    :root {
+      --bg:          #0d1117;
+      --bg2:         #161b22;
+      --bg3:         #1c2330;
+      --border:      #30363d;
+      --green:       #3fb950;
+      --green-dark:  #238636;
+      --green-glow:  rgba(63, 185, 80, 0.25);
+      --gold:        #e3b341;
+      --gold-glow:   rgba(227, 179, 65, 0.25);
+      --red:         #f85149;
+      --red-glow:    rgba(248, 81, 73, 0.25);
+      --blue:        #58a6ff;
+      --blue-glow:   rgba(88, 166, 255, 0.25);
+      --purple:      #bc8cff;
+      --purple-glow: rgba(188, 140, 255, 0.25);
+      --text:        #e6edf3;
+      --text-muted:  #8b949e;
+      --text-dim:    #484f58;
+      --radius:      8px;
+      --radius-lg:   14px;
+      --shadow:      0 4px 24px rgba(0,0,0,0.5);
+      --font-pixel:  'Press Start 2P', monospace;
+      --font-vt:     'VT323', monospace;
+      --font-body:   'Nunito', sans-serif;
+      --nav-width:   240px;
+      --transition:  0.2s ease;
+    }
+
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      overflow-x: hidden;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    img { max-width: 100%; display: block; }
+
+    button {
+      cursor: pointer;
+      font-family: var(--font-body);
+      border: none;
+      outline: none;
+    }
+
+    input, textarea, select {
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      width: 100%;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      outline: none;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px var(--green-glow);
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .field { margin-bottom: 16px; }
+
+    /* ============================================================
+       SCROLLBAR
+       ============================================================ */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+    /* ============================================================
+       SIDEBAR NAV
+       ============================================================ */
+    #sidebar {
+      width: var(--nav-width);
+      min-height: 100vh;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      transition: transform var(--transition);
+      overflow-y: auto;
+    }
+
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo .logo-icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .sidebar-logo h1 {
+      font-family: var(--font-pixel);
+      font-size: 0.55rem;
+      color: var(--green);
+      line-height: 1.8;
+      text-shadow: 0 0 10px var(--green-glow);
+    }
+
+    .sidebar-logo .server-tag {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    .nav-section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 18px 20px 6px;
+    }
+
+    .nav-list { list-style: none; padding: 0 10px; }
+
+    .nav-item button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      transition: background var(--transition), color var(--transition);
+      text-align: left;
+    }
+
+    .nav-item button:hover {
+      background: var(--bg3);
+      color: var(--text);
+    }
+
+    .nav-item button.active {
+      background: var(--green-glow);
+      color: var(--green);
+    }
+
+    .nav-item button .nav-icon {
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+
+    /* ============================================================
+       MAIN CONTENT AREA
+       ============================================================ */
+    #main {
+      margin-left: var(--nav-width);
+      flex: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top bar for mobile */
+    #topbar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 90;
+    }
+
+    #topbar .topbar-title {
+      font-family: var(--font-pixel);
+      font-size: 0.5rem;
+      color: var(--green);
+    }
+
+    #menu-toggle {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      font-size: 1.1rem;
+    }
+
+    /* ============================================================
+       PAGE SECTIONS
+       ============================================================ */
+    .page {
+      display: none;
+      padding: 32px 36px;
+      max-width: 960px;
+      width: 100%;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .page.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Page header */
+    .page-header {
+      margin-bottom: 32px;
+    }
+
+    .page-header .page-icon {
+      font-size: 2.4rem;
+      margin-bottom: 12px;
+    }
+
+    .page-header h2 {
+      font-family: var(--font-pixel);
+      font-size: 0.9rem;
+      color: var(--text);
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    /* ============================================================
+       CARDS
+       ============================================================ */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-weight: 800;
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    .card-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .card-body {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ============================================================
+       BUTTONS
+       ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 0.85rem;
+      transition: all var(--transition);
+    }
+
+    .btn-primary {
+      background: var(--green-dark);
+      color: #fff;
+      border: 1px solid var(--green);
+    }
+    .btn-primary:hover {
+      background: var(--green);
+      box-shadow: 0 0 12px var(--green-glow);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--red);
+      border: 1px solid var(--red);
+    }
+    .btn-danger:hover {
+      background: var(--red-glow);
+    }
+
+    .btn-ghost {
+      background: var(--bg3);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--text-muted); }
+
+    .btn-sm { padding: 6px 12px; font-size: 0.78rem; }
+
+    /* ============================================================
+       FORM PANEL
+       ============================================================ */
+    .form-panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .form-panel h3 {
+      font-family: var(--font-pixel);
+      font-size: 0.65rem;
+      color: var(--green);
+      margin-bottom: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    /* ============================================================
+       BADGE / TAG
+       ============================================================ */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+
+    .badge-green  { background: var(--green-glow);  color: var(--green);  border: 1px solid var(--green); }
+    .badge-gold   { background: var(--gold-glow);   color: var(--gold);   border: 1px solid var(--gold); }
+    .badge-red    { background: var(--red-glow);    color: var(--red);    border: 1px solid var(--red); }
+    .badge-blue   { background: var(--blue-glow);   color: var(--blue);   border: 1px solid var(--blue); }
+    .badge-purple { background: var(--purple-glow); color: var(--purple); border: 1px solid var(--purple); }
+
+    /* ============================================================
+       SEARCH BAR
+       ============================================================ */
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .search-bar input { flex: 1; }
+
+    /* ============================================================
+       DIVIDER
+       ============================================================ */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 20px 0;
+    }
+
+    /* ============================================================
+       TOAST NOTIFICATION
+       ============================================================ */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg2);
+      border: 1px solid var(--green);
+      color: var(--green);
+      padding: 12px 20px;
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 0.85rem;
+      box-shadow: var(--shadow);
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #toast.error {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    /* ============================================================
+       LOADING SPINNER
+       ============================================================ */
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 30px auto;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-dim);
+    }
+
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .empty-state p { font-size: 0.85rem; }
+
+    /* ============================================================
+       SECTION: DASHBOARD / HOME
+       ============================================================ */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .dash-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      cursor: pointer;
+      transition: all var(--transition);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .dash-card:hover {
+      border-color: var(--green);
+      box-shadow: 0 0 16px var(--green-glow);
+      transform: translateY(-2px);
+    }
+
+    .dash-card .dash-icon { font-size: 1.8rem; }
+
+    .dash-card h3 {
+      font-family: var(--font-pixel);
+      font-size: 0.5rem;
+      color: var(--text);
+      line-height: 1.8;
+    }
+
+    .dash-card p {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Pixel-art grass banner */
+    .hero-banner {
+      background: linear-gradient(135deg, #1a3a1a 0%, #0d2c0d 50%, #0d1117 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+
+    .hero-banner::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: repeating-linear-gradient(
+        90deg,
+        #5a8a3a 0px, #5a8a3a 16px,
+        #4a7a2a 16px, #4a7a2a 32px,
+        #6a9a4a 32px, #6a9a4a 48px,
+        #3a6a1a 48px, #3a6a1a 64px
+      );
+    }
+
+    .hero-banner::after {
+      content: '⛏️ 🌲 🗡️ 🐂 💎 🏰 🔥 🎣';
+      position: absolute;
+      right: 20px; bottom: 10px;
+      font-size: 1.1rem;
+      opacity: 0.15;
+      letter-spacing: 4px;
+    }
+
+    .hero-banner h2 {
+      font-family: var(--font-pixel);
+      font-size: 0.8rem;
+      color: var(--green);
+      line-height: 1.8;
+      text-shadow: 0 0 14px var(--green-glow);
+      margin-bottom: 10px;
+    }
+
+    .hero-banner p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      max-width: 480px;
+    }
+
+    /* ============================================================
+       SECTION: NAME SEARCH
+       ============================================================ */
+    .player-result {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 10px;
+      transition: border-color var(--transition);
+    }
+
+    .player-result:hover { border-color: var(--green); }
+
+    .player-avatar {
+      width: 48px; height: 48px;
+      border-radius: var(--radius);
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .player-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    .player-info h4 {
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .player-info span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .add-player-form {
+      background: var(--bg2);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .add-player-form h3 {
+      font-family: var(--font-pixel);
+      font-size: 0.6rem;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+
+    /* ============================================================
+       SECTION: RULES
+       ============================================================ */
+    .rule-item {
+      display: flex;
+      gap: 16px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      transition: border-color var(--transition);
+    }
+
+    .rule-item:hover { border-color: var(--red); }
+
+    .rule-number {
+      font-family: var(--font-pixel);
+      font-size: 0.65rem;
+      color: var(--red);
+      min-width: 36px;
+      padding-top: 2px;
+    }
+
+    .rule-content h4 {
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .rule-content p {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ============================================================
+       SECTION: EVENTS / NEWS
+       ============================================================ */
+    .event-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
+      border-radius: var(--radius-lg);
+      padding: 20px 22px;
+      margin-bottom: 14px;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    .event-card:hover {
+      transform: translateX(4px);
+      box-shadow: -4px 0 16px var(--blue-glow);
+    }
+
+    .event-card .event-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .event-card h3 {
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .event-card .event-date {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .event-card p {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ============================================================
+       SECTION: GUIDE
+       ============================================================ */
+    .recipe-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .recipe-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      transition: border-color var(--transition);
+    }
+
+    .recipe-card:hover { border-color: var(--gold); }
+
+    .recipe-card h4 {
+      font-family: var(--font-vt);
+      font-size: 1.3rem;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    /* 3x3 crafting grid */
+    .craft-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 40px);
+      gap: 3px;
+      margin-bottom: 12px;
+    }
+
+    .craft-cell {
+      width: 40px; height: 40px;
+      background: var(--bg3);
+      border: 2px solid #555;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      image-rendering: pixelated;
+      position: relative;
+    }
+
+    .craft-cell.empty { opacity: 0.3; }
+
+    .craft-arrow {
+      font-size: 1.4rem;
+      margin: 4px 0;
+      color: var(--text-muted);
+    }
+
+    .craft-result {
+      width: 48px; height: 48px;
+      font-size: 1.6rem;
+    }
+
+    .recipe-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .yt-links h3 {
+      font-family: var(--font-pixel);
+      font-size: 0.65rem;
+      color: var(--red);
+      margin-bottom: 16px;
+    }
+
+    .yt-link-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      transition: border-color var(--transition);
+    }
+
+    .yt-link-item:hover { border-color: var(--red); }
+
+    .yt-thumb {
+      width: 40px; height: 40px;
+      background: #c00;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .yt-link-item .yt-info h4 {
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    .yt-link-item .yt-info span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       SECTION: BOUNTY
+       ============================================================ */
+    .bounty-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .bounty-card:hover {
+      border-color: var(--gold);
+      box-shadow: 0 0 20px var(--gold-glow);
+    }
+
+    .bounty-card::before {
+      content: '🏆';
+      position: absolute;
+      right: 16px; top: 16px;
+      font-size: 1.6rem;
+      opacity: 0.12;
+    }
+
+    .bounty-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .bounty-target {
+      font-family: var(--font-pixel);
+      font-size: 0.6rem;
+      color: var(--red);
+    }
+
+    .bounty-reward {
+      font-family: var(--font-vt);
+      font-size: 1.4rem;
+      color: var(--gold);
+    }
+
+    .bounty-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .bounty-reason {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       SECTION: POTIONS
+       ============================================================ */
+    .potion-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .potion-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .potion-card:hover {
+      border-color: var(--purple);
+      box-shadow: 0 0 14px var(--purple-glow);
+    }
+
+    .potion-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .potion-icon {
+      font-size: 2rem;
+    }
+
+    .potion-name {
+      font-family: var(--font-vt);
+      font-size: 1.25rem;
+      color: var(--purple);
+    }
+
+    .potion-ingredients {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .potion-effect {
+      font-size: 0.82rem;
+      color: var(--text);
+      background: var(--bg3);
+      border-radius: var(--radius);
+      padding: 6px 10px;
+    }
+
+    /* ============================================================
+       SECTION: LOOT VALUES
+       ============================================================ */
+    .loot-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .loot-table th {
+      background: var(--bg3);
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .loot-table td {
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .loot-table tr:last-child td { border-bottom: none; }
+
+    .loot-table tr:hover td { background: var(--bg3); }
+
+    .loot-item-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+    }
+
+    .loot-item-name span { font-size: 1.2rem; }
+
+    .loot-value {
+      font-family: var(--font-vt);
+      font-size: 1.15rem;
+      color: var(--gold);
+    }
+
+    .loot-notes {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       SECTION: PLAY SESSION PLANNER
+       ============================================================ */
+    .session-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .session-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      transition: border-color var(--transition);
+    }
+
+    .session-card:hover { border-color: var(--blue); }
+
+    .session-player {
+      font-family: var(--font-pixel);
+      font-size: 0.55rem;
+      color: var(--blue);
+      margin-bottom: 10px;
+    }
+
+    .session-datetime {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .session-note {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ============================================================
+       MOBILE OVERLAY FOR SIDEBAR
+       ============================================================ */
+    #sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 99;
+    }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 768px) {
+      #sidebar {
+        transform: translateX(calc(-1 * var(--nav-width)));
+      }
+
+      #sidebar.open {
+        transform: translateX(0);
+      }
+
+      #sidebar-overlay.open { display: block; }
+
+      #main { margin-left: 0; }
+
+      #topbar { display: flex; }
+
+      .page { padding: 20px 16px; }
+
+      .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .loot-table { font-size: 0.8rem; }
+      .loot-table th, .loot-table td { padding: 10px 10px; }
+
+      .potion-grid { grid-template-columns: 1fr; }
+
+      .session-list { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 420px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .recipe-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ============================================================
+       PIXEL GRID TEXTURE (subtle bg decoration)
+       ============================================================ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+      background-size: 20px 20px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #main, #sidebar { position: relative; z-index: 1; }
+
+    /* ============================================================
+       COLLAPSIBLE TOGGLE FOR ADMIN ADD FORMS
+       ============================================================ */
+    .toggle-form-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: var(--radius);
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 16px;
+      transition: all var(--transition);
+    }
+
+    .toggle-form-btn:hover {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .collapsible-form {
+      display: none;
+    }
+
+    .collapsible-form.open {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+
+    /* delete button on cards */
+    .card-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       SIDEBAR NAVIGATION
+       ============================================================ -->
+  <nav id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">⛏️</div>
+      <h1>MC SERVER<br>HUB</h1>
+      <div class="server-tag">Private Class Server</div>
+    </div>
+
+    <!-- Main tools -->
+    <div class="nav-section-label">Server</div>
+    <ul class="nav-list">
+      <li class="nav-item">
+        <button class="active" onclick="navigate('home')" id="nav-home">
+          <span class="nav-icon">🏠</span> Dashboard
+        </button>
+      </li>
+      <li class="nav-item">
+        <button onclick="navigate('rules')" id="nav-rules">
+          <span class="nav-icon">📜</span> Rules
+        </button>
+      </li>
+      <li class="nav-item">
+        <button onclick="navigate('events')" id="nav-events">
+          <span class="nav-icon">📰</span> News &amp; Events
+        </button>
+      </li>
+    </ul>
+
+    <div class="nav-section-label">Players</div>
+    <ul class="nav-list">
+      <li class="nav-item">
+        <button onclick="navigate('namesearch')" id="nav-namesearch">
+          <span class="nav-icon">🔍</span> Name Search
+        </button>
+      </li>
+      <li class="nav-item">
+        <button onclick="navigate('bounty')" id="nav-bounty">
+          <span class="nav-icon">🏆</span> Bounty Board
+        </button>
+      </li>
+      <li class="nav-item">
+        <button onclick="navigate('planner')" id="nav-planner">
+          <span class="nav-icon">📅</span> Play Planner
+        </button>
+      </li>
+    </ul>
+
+    <div class="nav-section-label">Reference</div>
+    <ul class="nav-list">
+      <li class="nav-item">
+        <button onclick="navigate('guide')" id="nav-guide">
+          <span class="nav-icon">📗</span> Crafting Guide
+        </button>
+      </li>
+      <li class="nav-item">
+        <button onclick="navigate('potions')" id="nav-potions">
+          <span class="nav-icon">🧪</span> Potion Guide
+        </button>
+      </li>
+      <li class="nav-item">
+        <button onclick="navigate('loot')" id="nav-loot">
+          <span class="nav-icon">💎</span> Item Values
+        </button>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      ⚡ Powered by Firebase &amp; Cloudflare
+    </div>
+  </nav>
+
+  <!-- Mobile sidebar overlay -->
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- ============================================================
+       MAIN CONTENT
+       ============================================================ -->
+  <main id="main">
+
+    <!-- Mobile top bar -->
+    <div id="topbar">
+      <span class="topbar-title">MC HUB</span>
+      <button id="menu-toggle" onclick="toggleSidebar()">☰</button>
+    </div>
+
+    <!-- ===========================================================
+         PAGE: HOME / DASHBOARD
+         =========================================================== -->
+    <section class="page active" id="page-home">
+      <div class="page-header">
+        <div class="hero-banner">
+          <h2>Welcome Back,<br>Survivor! ⛏️</h2>
+          <p>Your one-stop hub for the private class Minecraft server. Find players, check rules, track bounties, and plan sessions.</p>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="dash-card" onclick="navigate('namesearch')">
+          <div class="dash-icon">🔍</div>
+          <h3>Name Search</h3>
+          <p>Look up who's who on the server</p>
+        </div>
+        <div class="dash-card" onclick="navigate('rules')">
+          <div class="dash-icon">📜</div>
+          <h3>Server Rules</h3>
+          <p>Keep it fair and fun for everyone</p>
+        </div>
+        <div class="dash-card" onclick="navigate('events')">
+          <div class="dash-icon">📰</div>
+          <h3>News &amp; Events</h3>
+          <p>Latest happenings on the server</p>
+        </div>
+        <div class="dash-card" onclick="navigate('bounty')">
+          <div class="dash-icon">🏆</div>
+          <h3>Bounty Board</h3>
+          <p>Place or check active bounties</p>
+        </div>
+        <div class="dash-card" onclick="navigate('guide')">
+          <div class="dash-icon">📗</div>
+          <h3>Crafting Guide</h3>
+          <p>Key recipes &amp; farm tutorials</p>
+        </div>
+        <div class="dash-card" onclick="navigate('potions')">
+          <div class="dash-icon">🧪</div>
+          <h3>Potion Guide</h3>
+          <p>Brewing recipes &amp; effects</p>
+        </div>
+        <div class="dash-card" onclick="navigate('loot')">
+          <div class="dash-icon">💎</div>
+          <h3>Item Values</h3>
+          <p>Economy price reference list</p>
+        </div>
+        <div class="dash-card" onclick="navigate('planner')">
+          <div class="dash-icon">📅</div>
+          <h3>Play Planner</h3>
+          <p>Tell others when you'll be on</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         PAGE: NAME SEARCH
+         =========================================================== -->
+    <section class="page" id="page-namesearch">
+      <div class="page-header">
+        <div class="page-icon">🔍</div>
+        <h2>Name Search</h2>
+        <p>Search any Minecraft username to find out who's behind the account.</p>
+      </div>
+
+      <!-- Search bar -->
+      <div class="search-bar">
+        <input type="text" id="player-search-input" placeholder="Search Minecraft username or real name…" oninput="filterPlayers()" />
+      </div>
+
+      <!-- Player list (rendered by JS) -->
+      <div id="player-list">
+        <div class="spinner"></div>
+      </div>
+
+      <!-- Add player form (collapsible) -->
+      <button class="toggle-form-btn" onclick="toggleForm('add-player-form')">
+        ➕ Add Player
+      </button>
+
+      <div class="collapsible-form" id="add-player-form">
+        <div class="form-panel">
+          <h3>Add New Player</h3>
+          <div class="form-row">
+            <div class="field">
+              <label for="new-mc-name">Minecraft Username</label>
+              <input type="text" id="new-mc-name" placeholder="e.g. Notch" />
+            </div>
+            <div class="field">
+              <label for="new-real-name">Real Name</label>
+              <input type="text" id="new-real-name" placeholder="e.g. Markus Persson" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="new-player-note">Note (optional)</label>
+            <input type="text" id="new-player-note" placeholder="e.g. Class of 2025, Team Red" />
+          </div>
+          <button class="btn btn-primary" onclick="addPlayer()">💾 Save Player</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         PAGE: SERVER RULES
+         =========================================================== -->
+    <section class="page" id="page-rules">
+      <div class="page-header">
+        <div class="page-icon">📜</div>
+        <h2>Server Rules</h2>
+        <p>Read and follow these rules to keep the server fun and fair for everyone.</p>
+      </div>
+
+      <!-- Static rules — edit these directly in the HTML -->
+      <div id="rules-list">
+        <!-- Rules are hardcoded here since they rarely change -->
+        <div class="rule-item">
+          <div class="rule-number">#01</div>
+          <div class="rule-content">
+            <h4>No Griefing</h4>
+            <p>Do not destroy, steal from, or damage other players' builds without explicit permission. This includes breaking blocks in someone else's base or farm.</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">#02</div>
+          <div class="rule-content">
+            <h4>No Cheating or Hacks</h4>
+            <p>No hacked clients, X-ray, or any cheat modifications. Only vanilla Minecraft or approved resource packs are allowed.</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">#03</div>
+          <div class="rule-content">
+            <h4>Respect All Players</h4>
+            <p>No harassment, hate speech, or toxic behavior in chat. Keep it friendly. This is a class server — act accordingly.</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">#04</div>
+          <div class="rule-content">
+            <h4>PvP By Consent Only</h4>
+            <p>Do not kill other players unless both parties agree to PvP. Check the Bounty Board — active bounties are the exception.</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">#05</div>
+          <div class="rule-content">
+            <h4>Keep the Environment Clean</h4>
+            <p>Don't leave floating trees, 1x1 towers, giant holes, or abandoned constructions. Clean up after mining and building.</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">#06</div>
+          <div class="rule-content">
+            <h4>No Exploiting Bugs</h4>
+            <p>If you find a dupe glitch or game-breaking bug, report it — don't use it. Fair economy is everyone's responsibility.</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">#07</div>
+          <div class="rule-content">
+            <h4>Share Public Farms</h4>
+            <p>If you build a public farm (mob farm, iron farm, etc.), let others know and don't lock them out without reason.</p>
+          </div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-number">#08</div>
+          <div class="rule-content">
+            <h4>Coordinate Before Big Projects</h4>
+            <p>Planning a massive build? Post it in the Events section or tell the group first so nobody builds on your reserved land.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         PAGE: NEWS & EVENTS
+         =========================================================== -->
+    <section class="page" id="page-events">
+      <div class="page-header">
+        <div class="page-icon">📰</div>
+        <h2>News &amp; Events</h2>
+        <p>Stay up to date with what's happening on the server.</p>
+      </div>
+
+      <button class="toggle-form-btn" onclick="toggleForm('add-event-form')">
+        ➕ Post Event / News
+      </button>
+
+      <div class="collapsible-form" id="add-event-form">
+        <div class="form-panel">
+          <h3>New Post</h3>
+          <div class="field">
+            <label for="event-title">Title</label>
+            <input type="text" id="event-title" placeholder="e.g. Dragon Egg Auction this Sunday!" />
+          </div>
+          <div class="field">
+            <label for="event-desc">Description</label>
+            <textarea id="event-desc" placeholder="Describe what's happening…"></textarea>
+          </div>
+          <div class="field">
+            <label for="event-date">Date</label>
+            <input type="date" id="event-date" />
+          </div>
+          <button class="btn btn-primary" onclick="addEvent()">📢 Post</button>
+        </div>
+      </div>
+
+      <div id="events-list">
+        <div class="spinner"></div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         PAGE: CRAFTING GUIDE
+         =========================================================== -->
+    <section class="page" id="page-guide">
+      <div class="page-header">
+        <div class="page-icon">📗</div>
+        <h2>Crafting Guide</h2>
+        <p>Key recipes you'll need and YouTube links to the best farm tutorials.</p>
+      </div>
+
+      <h3 style="font-family:var(--font-pixel);font-size:0.65rem;color:var(--gold);margin-bottom:20px;">
+        ⚒️ Important Recipes
+      </h3>
+
+      <!-- Static crafting recipes — add more as needed -->
+      <div class="recipe-grid">
+
+        <!-- Diamond Pickaxe -->
+        <div class="recipe-card">
+          <h4>Diamond Pickaxe</h4>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div>
+              <div class="craft-grid">
+                <div class="craft-cell">💎</div><div class="craft-cell">💎</div><div class="craft-cell">💎</div>
+                <div class="craft-cell empty"></div><div class="craft-cell">🪵</div><div class="craft-cell empty"></div>
+                <div class="craft-cell empty"></div><div class="craft-cell">🪵</div><div class="craft-cell empty"></div>
+              </div>
+            </div>
+            <div class="craft-arrow">→</div>
+            <div class="craft-cell craft-result">⛏️</div>
+          </div>
+          <p class="recipe-desc">3 Diamonds on top row, 2 Sticks in the middle column below.</p>
+        </div>
+
+        <!-- Enchanting Table -->
+        <div class="recipe-card">
+          <h4>Enchanting Table</h4>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div>
+              <div class="craft-grid">
+                <div class="craft-cell empty"></div><div class="craft-cell">📖</div><div class="craft-cell empty"></div>
+                <div class="craft-cell">💎</div><div class="craft-cell">🪨</div><div class="craft-cell">💎</div>
+                <div class="craft-cell">🪨</div><div class="craft-cell">🪨</div><div class="craft-cell">🪨</div>
+              </div>
+            </div>
+            <div class="craft-arrow">→</div>
+            <div class="craft-cell craft-result">✨</div>
+          </div>
+          <p class="recipe-desc">Book top-centre, Diamonds row 2 sides, Obsidian bottom 3 + centre row 2.</p>
+        </div>
+
+        <!-- Beacon -->
+        <div class="recipe-card">
+          <h4>Beacon</h4>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div>
+              <div class="craft-grid">
+                <div class="craft-cell">🪟</div><div class="craft-cell">🪟</div><div class="craft-cell">🪟</div>
+                <div class="craft-cell">🪟</div><div class="craft-cell">⭐</div><div class="craft-cell">🪟</div>
+                <div class="craft-cell">⬛</div><div class="craft-cell">⬛</div><div class="craft-cell">⬛</div>
+              </div>
+            </div>
+            <div class="craft-arrow">→</div>
+            <div class="craft-cell craft-result">🔦</div>
+          </div>
+          <p class="recipe-desc">Glass border, Nether Star centre, Obsidian bottom row.</p>
+        </div>
+
+        <!-- Anvil -->
+        <div class="recipe-card">
+          <h4>Anvil</h4>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div>
+              <div class="craft-grid">
+                <div class="craft-cell">🟫</div><div class="craft-cell">🟫</div><div class="craft-cell">🟫</div>
+                <div class="craft-cell empty"></div><div class="craft-cell">🟫</div><div class="craft-cell empty"></div>
+                <div class="craft-cell">🟫</div><div class="craft-cell">🟫</div><div class="craft-cell">🟫</div>
+              </div>
+            </div>
+            <div class="craft-arrow">→</div>
+            <div class="craft-cell craft-result">⚒️</div>
+          </div>
+          <p class="recipe-desc">Iron Blocks on top and bottom rows, Iron Block centre middle.</p>
+        </div>
+
+        <!-- TNT -->
+        <div class="recipe-card">
+          <h4>TNT</h4>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div>
+              <div class="craft-grid">
+                <div class="craft-cell">💣</div><div class="craft-cell">🪨</div><div class="craft-cell">💣</div>
+                <div class="craft-cell">🪨</div><div class="craft-cell">💣</div><div class="craft-cell">🪨</div>
+                <div class="craft-cell">💣</div><div class="craft-cell">🪨</div><div class="craft-cell">💣</div>
+              </div>
+            </div>
+            <div class="craft-arrow">→</div>
+            <div class="craft-cell craft-result">💥</div>
+          </div>
+          <p class="recipe-desc">Alternating Gunpowder and Sand in a checkerboard pattern.</p>
+        </div>
+
+        <!-- Brewing Stand -->
+        <div class="recipe-card">
+          <h4>Brewing Stand</h4>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div>
+              <div class="craft-grid">
+                <div class="craft-cell empty"></div><div class="craft-cell">🔥</div><div class="craft-cell empty"></div>
+                <div class="craft-cell empty"></div><div class="craft-cell">🔥</div><div class="craft-cell empty"></div>
+                <div class="craft-cell">🪨</div><div class="craft-cell">🪨</div><div class="craft-cell">🪨</div>
+              </div>
+            </div>
+            <div class="craft-arrow">→</div>
+            <div class="craft-cell craft-result">🧪</div>
+          </div>
+          <p class="recipe-desc">Blaze Rod in top & mid centre, Cobblestone across the bottom.</p>
+        </div>
+
+      </div>
+
+      <hr class="divider" />
+
+      <!-- YouTube tutorial links -->
+      <div class="yt-links">
+        <h3>🎬 Farm Tutorial Links</h3>
+
+        <div class="yt-link-item">
+          <div class="yt-thumb">▶️</div>
+          <div class="yt-info">
+            <h4>Best Iron Farm (1.20+)</h4>
+            <span>Produces ~1400 iron/hour — great early game</span>
+          </div>
+          <a href="https://www.youtube.com/results?search_query=minecraft+iron+farm+1.20" target="_blank" class="btn btn-ghost btn-sm" style="margin-left:auto;white-space:nowrap">Watch →</a>
+        </div>
+
+        <div class="yt-link-item">
+          <div class="yt-thumb">▶️</div>
+          <div class="yt-info">
+            <h4>XP / Mob Grinder Farm</h4>
+            <span>AFK-able, fast levelling — post-Nether build</span>
+          </div>
+          <a href="https://www.youtube.com/results?search_query=minecraft+mob+grinder+xp+farm+1.20" target="_blank" class="btn btn-ghost btn-sm" style="margin-left:auto;white-space:nowrap">Watch →</a>
+        </div>
+
+        <div class="yt-link-item">
+          <div class="yt-thumb">▶️</div>
+          <div class="yt-info">
+            <h4>Automatic Wheat Farm</h4>
+            <span>Fully automatic food supply — early survival</span>
+          </div>
+          <a href="https://www.youtube.com/results?search_query=minecraft+automatic+wheat+farm+1.20" target="_blank" class="btn btn-ghost btn-sm" style="margin-left:auto;white-space:nowrap">Watch →</a>
+        </div>
+
+        <div class="yt-link-item">
+          <div class="yt-thumb">▶️</div>
+          <div class="yt-info">
+            <h4>Blaze Rod Farm (Nether)</h4>
+            <span>Needed for brewing — build this ASAP</span>
+          </div>
+          <a href="https://www.youtube.com/results?search_query=minecraft+blaze+farm+nether+fortress+1.20" target="_blank" class="btn btn-ghost btn-sm" style="margin-left:auto;white-space:nowrap">Watch →</a>
+        </div>
+
+        <div class="yt-link-item">
+          <div class="yt-thumb">▶️</div>
+          <div class="yt-info">
+            <h4>Raid Farm (Emerald Money Printer)</h4>
+            <span>Insane emerald income — end-game must-have</span>
+          </div>
+          <a href="https://www.youtube.com/results?search_query=minecraft+raid+farm+1.20+emeralds" target="_blank" class="btn btn-ghost btn-sm" style="margin-left:auto;white-space:nowrap">Watch →</a>
+        </div>
+
+        <div class="yt-link-item">
+          <div class="yt-thumb">▶️</div>
+          <div class="yt-info">
+            <h4>Gold Farm (Nether Portal)</h4>
+            <span>AFK gold &amp; XP via zombie piglin spawning</span>
+          </div>
+          <a href="https://www.youtube.com/results?search_query=minecraft+gold+farm+nether+portal+1.20" target="_blank" class="btn btn-ghost btn-sm" style="margin-left:auto;white-space:nowrap">Watch →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         PAGE: BOUNTY BOARD
+         =========================================================== -->
+    <section class="page" id="page-bounty">
+      <div class="page-header">
+        <div class="page-icon">🏆</div>
+        <h2>Bounty Board</h2>
+        <p>Place a bounty on a player or collect rewards. All bounties are PvP-consent bounties only.</p>
+      </div>
+
+      <button class="toggle-form-btn" onclick="toggleForm('add-bounty-form')">
+        ➕ Place Bounty
+      </button>
+
+      <div class="collapsible-form" id="add-bounty-form">
+        <div class="form-panel">
+          <h3>Place New Bounty</h3>
+          <div class="form-row">
+            <div class="field">
+              <label for="bounty-target">Target Player (MC name)</label>
+              <input type="text" id="bounty-target" placeholder="e.g. Steve123" />
+            </div>
+            <div class="field">
+              <label for="bounty-reward">Reward</label>
+              <input type="text" id="bounty-reward" placeholder="e.g. 5 Diamonds, 10 Gold Ingots" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label for="bounty-by">Placed By (your MC name)</label>
+              <input type="text" id="bounty-by" placeholder="e.g. Alex99" />
+            </div>
+            <div class="field">
+              <label for="bounty-reason">Reason</label>
+              <input type="text" id="bounty-reason" placeholder="e.g. Stole my iron farm output" />
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="addBounty()">🎯 Place Bounty</button>
+        </div>
+      </div>
+
+      <div id="bounty-list">
+        <div class="spinner"></div>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         PAGE: POTION GUIDE
+         =========================================================== -->
+    <section class="page" id="page-potions">
+      <div class="page-header">
+        <div class="page-icon">🧪</div>
+        <h2>Potion Guide</h2>
+        <p>All brewing recipes and what each potion does. You need a Brewing Stand + Blaze Powder.</p>
+      </div>
+
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:24px;font-size:0.82rem;color:var(--text-muted);">
+        💡 <strong style="color:var(--text)">Base bottle:</strong> Water Bottle → add <strong style="color:var(--text)">Nether Wart</strong> to make Awkward Potion → then add ingredient below.
+      </div>
+
+      <!-- Static potion data rendered here -->
+      <div class="potion-grid" id="potion-grid">
+        <!-- Rendered by JS from static data -->
+      </div>
+
+      <!-- Add custom potion (stored in Firestore) -->
+      <hr class="divider" />
+      <button class="toggle-form-btn" onclick="toggleForm('add-potion-form')">
+        ➕ Add Custom Potion Entry
+      </button>
+      <div class="collapsible-form" id="add-potion-form">
+        <div class="form-panel">
+          <h3>Add Potion</h3>
+          <div class="form-row">
+            <div class="field">
+              <label for="potion-name">Potion Name</label>
+              <input type="text" id="potion-name" placeholder="e.g. Potion of Luck" />
+            </div>
+            <div class="field">
+              <label for="potion-icon">Emoji Icon</label>
+              <input type="text" id="potion-icon" placeholder="e.g. 🍀" maxlength="4" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="potion-ingredients">Ingredients</label>
+            <input type="text" id="potion-ingredients" placeholder="e.g. Awkward Potion + Apple" />
+          </div>
+          <div class="field">
+            <label for="potion-effect">Effect</label>
+            <input type="text" id="potion-effect" placeholder="e.g. Luck I for 5 minutes" />
+          </div>
+          <button class="btn btn-primary" onclick="addPotion()">💾 Save Potion</button>
+        </div>
+      </div>
+
+      <!-- Custom potions from Firestore -->
+      <div id="custom-potions-list"></div>
+    </section>
+
+    <!-- ===========================================================
+         PAGE: LOOT / ITEM VALUES
+         =========================================================== -->
+    <section class="page" id="page-loot">
+      <div class="page-header">
+        <div class="page-icon">💎</div>
+        <h2>Item Values</h2>
+        <p>Approximate server economy values. Use these as a reference when trading.</p>
+      </div>
+
+      <button class="toggle-form-btn" onclick="toggleForm('add-loot-form')">
+        ➕ Add Item
+      </button>
+
+      <div class="collapsible-form" id="add-loot-form">
+        <div class="form-panel">
+          <h3>Add Item Value</h3>
+          <div class="form-row">
+            <div class="field">
+              <label for="loot-item">Item Name</label>
+              <input type="text" id="loot-item" placeholder="e.g. Netherite Ingot" />
+            </div>
+            <div class="field">
+              <label for="loot-icon">Emoji</label>
+              <input type="text" id="loot-icon" placeholder="🔱" maxlength="4" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label for="loot-value">Value</label>
+              <input type="text" id="loot-value" placeholder="e.g. 64 Diamonds" />
+            </div>
+            <div class="field">
+              <label for="loot-notes">Notes</label>
+              <input type="text" id="loot-notes" placeholder="e.g. Rare, price fluctuates" />
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="addLootItem()">💾 Save Item</button>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="loot-table" id="loot-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Value</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="loot-tbody">
+            <tr><td colspan="4"><div class="spinner"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===========================================================
+         PAGE: PLAY SESSION PLANNER
+         =========================================================== -->
+    <section class="page" id="page-planner">
+      <div class="page-header">
+        <div class="page-icon">📅</div>
+        <h2>Play Session Planner</h2>
+        <p>Let your classmates know when you plan to hop on. Coordinate big builds or raids!</p>
+      </div>
+
+      <div class="form-panel">
+        <h3>Add My Session</h3>
+        <div class="form-row">
+          <div class="field">
+            <label for="session-player">Your MC Username</label>
+            <input type="text" id="session-player" placeholder="e.g. CreeperKing99" />
+          </div>
+          <div class="field">
+            <label for="session-date">Date</label>
+            <input type="date" id="session-date" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="session-time">Time</label>
+            <input type="time" id="session-time" />
+          </div>
+          <div class="field">
+            <label for="session-note">Note (optional)</label>
+            <input type="text" id="session-note" placeholder="e.g. Going to farm Blaze rods" />
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="addSession()">📅 Add Session</button>
+      </div>
+
+      <div id="session-list">
+        <div class="spinner"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast notification element -->
+  <div id="toast"></div>
+
+  <!-- ============================================================
+       FIREBASE SDK (v10 modular via CDN)
+       ============================================================ -->
+  <script type="module">
+    // ============================================================
+    // FIREBASE INITIALISATION
+    // ============================================================
+    import { initializeApp }              from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore,
+             collection, addDoc, getDocs,
+             deleteDoc, doc, query,
+             orderBy, serverTimestamp,
+             onSnapshot }                 from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey:            "AIzaSyBHmq2hPEyb2z89XIR4y-FlKJYpSObh8Iw",
+      authDomain:        "printsome-b5197.firebaseapp.com",
+      projectId:         "printsome-b5197",
+      storageBucket:     "printsome-b5197.firebasestorage.app",
+      messagingSenderId: "558794337754",
+      appId:             "1:558794337754:web:324c537a347d6e0991a4e3",
+      measurementId:     "G-TL2RN2TRLR"
+    };
+
+    // Initialise Firebase app and Firestore
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    // ============================================================
+    // HELPERS: show toast notification
+    // ============================================================
+    function toast(msg, isError = false) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'show' + (isError ? ' error' : '');
+      setTimeout(() => { el.className = ''; }, 3000);
+    }
+
+    // ============================================================
+    // HELPERS: empty-state HTML
+    // ============================================================
+    function emptyState(icon, msg) {
+      return `<div class="empty-state"><div class="empty-icon">${icon}</div><p>${msg}</p></div>`;
+    }
+
+    // ============================================================
+    // NAVIGATION — exposed globally
+    // ============================================================
+    window.navigate = function(page) {
+      // Hide all pages
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      // Remove active from all nav buttons
+      document.querySelectorAll('.nav-item button').forEach(b => b.classList.remove('active'));
+      // Show target page
+      document.getElementById('page-' + page).classList.add('active');
+      // Highlight nav button
+      const btn = document.getElementById('nav-' + page);
+      if (btn) btn.classList.add('active');
+      // Close mobile sidebar
+      closeSidebar();
+    };
+
+    // ============================================================
+    // SIDEBAR TOGGLE (mobile)
+    // ============================================================
+    window.toggleSidebar = function() {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('sidebar-overlay').classList.toggle('open');
+    };
+
+    window.closeSidebar = function() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('open');
+    };
+
+    // ============================================================
+    // COLLAPSIBLE FORMS
+    // ============================================================
+    window.toggleForm = function(id) {
+      const el = document.getElementById(id);
+      el.classList.toggle('open');
+    };
+
+    // ============================================================
+    // MODULE-LEVEL CACHE for players (for live search filter)
+    // ============================================================
+    let allPlayers = [];
+
+    // ============================================================
+    // PAGE: NAME SEARCH
+    // ============================================================
+
+    // Load players from Firestore and render
+    async function loadPlayers() {
+      const container = document.getElementById('player-list');
+      try {
+        const q = query(collection(db, 'players'), orderBy('minecraftName'));
+        onSnapshot(q, (snapshot) => {
+          allPlayers = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+          renderPlayers(allPlayers);
+        });
+      } catch (err) {
+        console.error('loadPlayers error:', err);
+        container.innerHTML = emptyState('⚠️', 'Could not load players. Check Firestore rules.');
+      }
+    }
+
+    function renderPlayers(players) {
+      const container = document.getElementById('player-list');
+      if (!players.length) {
+        container.innerHTML = emptyState('👤', 'No players found. Add the first one below!');
+        return;
+      }
+      container.innerHTML = players.map(p => `
+        <div class="player-result">
+          <div class="player-avatar">
+            <img
+              src="https://mc-heads.net/avatar/${encodeURIComponent(p.minecraftName)}/48"
+              alt="${p.minecraftName}"
+              onerror="this.style.display='none';this.parentElement.textContent='🧑'"
+            />
+          </div>
+          <div class="player-info" style="flex:1">
+            <h4>${escHtml(p.minecraftName)}</h4>
+            <span>Real name: <strong>${escHtml(p.realName)}</strong></span>
+            ${p.note ? `<br><span style="font-size:0.74rem;color:var(--text-dim)">${escHtml(p.note)}</span>` : ''}
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deletePlayer('${p.id}')">🗑</button>
+        </div>
+      `).join('');
+    }
+
+    // Filter players by search input (runs locally, no Firestore hit)
+    window.filterPlayers = function() {
+      const q = document.getElementById('player-search-input').value.toLowerCase().trim();
+      if (!q) { renderPlayers(allPlayers); return; }
+      const filtered = allPlayers.filter(p =>
+        p.minecraftName.toLowerCase().includes(q) ||
+        p.realName.toLowerCase().includes(q) ||
+        (p.note && p.note.toLowerCase().includes(q))
+      );
+      renderPlayers(filtered);
+    };
+
+    // Add a player to Firestore
+    window.addPlayer = async function() {
+      const mcName   = document.getElementById('new-mc-name').value.trim();
+      const realName = document.getElementById('new-real-name').value.trim();
+      const note     = document.getElementById('new-player-note').value.trim();
+
+      if (!mcName || !realName) { toast('⚠️ MC name and real name are required', true); return; }
+
+      try {
+        await addDoc(collection(db, 'players'), {
+          minecraftName: mcName,
+          realName:      realName,
+          note:          note,
+          createdAt:     serverTimestamp()
+        });
+        // Clear fields
+        document.getElementById('new-mc-name').value   = '';
+        document.getElementById('new-real-name').value = '';
+        document.getElementById('new-player-note').value = '';
+        toast('✅ Player added!');
+      } catch (err) {
+        console.error('addPlayer error:', err);
+        toast('❌ Failed to add player', true);
+      }
+    };
+
+    // Delete player
+    window.deletePlayer = async function(id) {
+      if (!confirm('Remove this player?')) return;
+      try {
+        await deleteDoc(doc(db, 'players', id));
+        toast('🗑 Player removed');
+      } catch (err) {
+        console.error('deletePlayer error:', err);
+        toast('❌ Failed to delete', true);
+      }
+    };
+
+    // ============================================================
+    // PAGE: EVENTS / NEWS
+    // ============================================================
+
+    async function loadEvents() {
+      const container = document.getElementById('events-list');
+      try {
+        const q = query(collection(db, 'events'), orderBy('createdAt', 'desc'));
+        onSnapshot(q, (snapshot) => {
+          if (snapshot.empty) {
+            container.innerHTML = emptyState('📰', 'No events yet. Post one above!');
+            return;
+          }
+          container.innerHTML = snapshot.docs.map(d => {
+            const e = d.data();
+            const dateStr = e.date || (e.createdAt?.toDate ? e.createdAt.toDate().toLocaleDateString() : '');
+            return `
+              <div class="event-card">
+                <div class="event-header">
+                  <h3>${escHtml(e.title)}</h3>
+                  <span class="event-date">📅 ${escHtml(dateStr)}</span>
+                </div>
+                <p>${escHtml(e.description)}</p>
+                <div class="card-actions">
+                  <button class="btn btn-danger btn-sm" onclick="deleteEvent('${d.id}')">🗑 Delete</button>
+                </div>
+              </div>`;
+          }).join('');
+        });
+      } catch (err) {
+        console.error('loadEvents error:', err);
+        container.innerHTML = emptyState('⚠️', 'Could not load events.');
+      }
+    }
+
+    window.addEvent = async function() {
+      const title = document.getElementById('event-title').value.trim();
+      const desc  = document.getElementById('event-desc').value.trim();
+      const date  = document.getElementById('event-date').value;
+
+      if (!title || !desc) { toast('⚠️ Title and description required', true); return; }
+
+      try {
+        await addDoc(collection(db, 'events'), {
+          title, description: desc, date,
+          createdAt: serverTimestamp()
+        });
+        document.getElementById('event-title').value = '';
+        document.getElementById('event-desc').value  = '';
+        document.getElementById('event-date').value  = '';
+        toast('📢 Event posted!');
+      } catch (err) {
+        console.error('addEvent error:', err);
+        toast('❌ Failed to post event', true);
+      }
+    };
+
+    window.deleteEvent = async function(id) {
+      if (!confirm('Delete this event?')) return;
+      try {
+        await deleteDoc(doc(db, 'events', id));
+        toast('🗑 Event deleted');
+      } catch (err) {
+        toast('❌ Failed to delete', true);
+      }
+    };
+
+    // ============================================================
+    // PAGE: BOUNTY BOARD
+    // ============================================================
+
+    async function loadBounties() {
+      const container = document.getElementById('bounty-list');
+      try {
+        const q = query(collection(db, 'bounties'), orderBy('createdAt', 'desc'));
+        onSnapshot(q, (snapshot) => {
+          if (snapshot.empty) {
+            container.innerHTML = emptyState('🏆', 'No active bounties. Place one above!');
+            return;
+          }
+          container.innerHTML = snapshot.docs.map(d => {
+            const b = d.data();
+            return `
+              <div class="bounty-card">
+                <div class="bounty-header">
+                  <div>
+                    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">TARGET</div>
+                    <div class="bounty-target">${escHtml(b.targetPlayer)}</div>
+                  </div>
+                  <div style="text-align:right">
+                    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">REWARD</div>
+                    <div class="bounty-reward">${escHtml(b.reward)}</div>
+                  </div>
+                </div>
+                <div class="bounty-meta">Posted by <strong>${escHtml(b.placedBy)}</strong></div>
+                ${b.reason ? `<div class="bounty-reason">📝 ${escHtml(b.reason)}</div>` : ''}
+                <div class="card-actions">
+                  <button class="btn btn-danger btn-sm" onclick="deleteBounty('${d.id}')">🗑 Remove</button>
+                </div>
+              </div>`;
+          }).join('');
+        });
+      } catch (err) {
+        console.error('loadBounties error:', err);
+        container.innerHTML = emptyState('⚠️', 'Could not load bounties.');
+      }
+    }
+
+    window.addBounty = async function() {
+      const target = document.getElementById('bounty-target').value.trim();
+      const reward = document.getElementById('bounty-reward').value.trim();
+      const by     = document.getElementById('bounty-by').value.trim();
+      const reason = document.getElementById('bounty-reason').value.trim();
+
+      if (!target || !reward || !by) { toast('⚠️ Target, reward, and "placed by" are required', true); return; }
+
+      try {
+        await addDoc(collection(db, 'bounties'), {
+          targetPlayer: target, reward, placedBy: by, reason,
+          createdAt: serverTimestamp()
+        });
+        document.getElementById('bounty-target').value = '';
+        document.getElementById('bounty-reward').value = '';
+        document.getElementById('bounty-by').value     = '';
+        document.getElementById('bounty-reason').value = '';
+        toast('🎯 Bounty placed!');
+      } catch (err) {
+        console.error('addBounty error:', err);
+        toast('❌ Failed to place bounty', true);
+      }
+    };
+
+    window.deleteBounty = async function(id) {
+      if (!confirm('Remove this bounty?')) return;
+      try {
+        await deleteDoc(doc(db, 'bounties', id));
+        toast('🗑 Bounty removed');
+      } catch (err) {
+        toast('❌ Failed to remove', true);
+      }
+    };
+
+    // ============================================================
+    // PAGE: POTION GUIDE — static data + custom from Firestore
+    // ============================================================
+
+    // Static built-in potions (always shown, no Firestore needed)
+    const STATIC_POTIONS = [
+      { icon:'🩺', name:'Healing',        ingredients:'Awkward + Glistering Melon',         effect:'Instantly restores 4 ❤ (Healing II: 8 ❤)' },
+      { icon:'☠️',  name:'Poison',         ingredients:'Awkward + Spider Eye',               effect:'Deals poison damage over time (no death)' },
+      { icon:'🔥',  name:'Fire Resistance',ingredients:'Awkward + Magma Cream',              effect:'Complete immunity to fire and lava for 3 min' },
+      { icon:'💨',  name:'Swiftness',      ingredients:'Awkward + Sugar',                    effect:'Speed boost +20% movement for 3 min' },
+      { icon:'🐢',  name:'Slowness',       ingredients:'Swiftness or Leaping + Fermented Eye', effect:'Reduces movement speed by 15%' },
+      { icon:'🌙',  name:'Night Vision',   ingredients:'Awkward + Golden Carrot',            effect:'Full brightness in dark areas for 3 min' },
+      { icon:'🌊',  name:'Water Breathing',ingredients:'Awkward + Pufferfish',               effect:'Breathe underwater for 3 min' },
+      { icon:'🦅',  name:'Leaping',        ingredients:'Awkward + Rabbit\'s Foot',           effect:'Jump boost — jump ~1.5 blocks higher' },
+      { icon:'💪',  name:'Strength',       ingredients:'Awkward + Blaze Powder',             effect:'+130% melee damage for 3 min' },
+      { icon:'👻',  name:'Invisibility',   ingredients:'Night Vision + Fermented Spider Eye', effect:'Become invisible to mobs and players' },
+      { icon:'⚡',  name:'Regeneration',   ingredients:'Awkward + Ghast Tear',              effect:'Regenerate ❤ every 2.5 seconds' },
+      { icon:'🛡️',  name:'Slow Falling',   ingredients:'Awkward + Phantom Membrane',        effect:'Fall at reduced speed, no fall damage' },
+      { icon:'🫀',  name:'Harming',        ingredients:'Healing + Fermented Spider Eye',     effect:'Deals 6 ❤ instant damage' },
+      { icon:'🧊',  name:'Turtle Master',  ingredients:'Awkward + Turtle Shell',             effect:'Resistance IV + Slowness IV for 20 sec' },
+    ];
+
+    function renderStaticPotions() {
+      const grid = document.getElementById('potion-grid');
+      grid.innerHTML = STATIC_POTIONS.map(p => `
+        <div class="potion-card">
+          <div class="potion-header">
+            <div class="potion-icon">${p.icon}</div>
+            <div class="potion-name">Potion of ${p.name}</div>
+          </div>
+          <div class="potion-ingredients">🧂 <strong>Ingredients:</strong> ${escHtml(p.ingredients)}</div>
+          <div class="potion-effect">✨ ${escHtml(p.effect)}</div>
+        </div>
+      `).join('');
+    }
+
+    async function loadCustomPotions() {
+      const container = document.getElementById('custom-potions-list');
+      try {
+        const q = query(collection(db, 'potions'), orderBy('createdAt', 'desc'));
+        onSnapshot(q, (snapshot) => {
+          if (snapshot.empty) { container.innerHTML = ''; return; }
+          container.innerHTML = '<h3 style="font-family:var(--font-pixel);font-size:0.6rem;color:var(--text-muted);margin:20px 0 14px">Custom Potions</h3>' +
+            '<div class="potion-grid">' +
+            snapshot.docs.map(d => {
+              const p = d.data();
+              return `
+                <div class="potion-card">
+                  <div class="potion-header">
+                    <div class="potion-icon">${escHtml(p.icon || '🧪')}</div>
+                    <div class="potion-name">${escHtml(p.potionName)}</div>
+                  </div>
+                  <div class="potion-ingredients">🧂 <strong>Ingredients:</strong> ${escHtml(p.ingredients)}</div>
+                  <div class="potion-effect">✨ ${escHtml(p.effect)}</div>
+                  <div class="card-actions">
+                    <button class="btn btn-danger btn-sm" onclick="deletePotion('${d.id}')">🗑</button>
+                  </div>
+                </div>`;
+            }).join('') + '</div>';
+        });
+      } catch (err) {
+        console.error('loadCustomPotions error:', err);
+      }
+    }
+
+    window.addPotion = async function() {
+      const potionName   = document.getElementById('potion-name').value.trim();
+      const icon         = document.getElementById('potion-icon').value.trim() || '🧪';
+      const ingredients  = document.getElementById('potion-ingredients').value.trim();
+      const effect       = document.getElementById('potion-effect').value.trim();
+
+      if (!potionName || !ingredients || !effect) { toast('⚠️ Fill in all potion fields', true); return; }
+
+      try {
+        await addDoc(collection(db, 'potions'), {
+          potionName, icon, ingredients, effect,
+          createdAt: serverTimestamp()
+        });
+        document.getElementById('potion-name').value        = '';
+        document.getElementById('potion-icon').value        = '';
+        document.getElementById('potion-ingredients').value = '';
+        document.getElementById('potion-effect').value      = '';
+        toast('🧪 Potion added!');
+      } catch (err) {
+        console.error('addPotion error:', err);
+        toast('❌ Failed to add potion', true);
+      }
+    };
+
+    window.deletePotion = async function(id) {
+      if (!confirm('Delete this potion entry?')) return;
+      try {
+        await deleteDoc(doc(db, 'potions', id));
+        toast('🗑 Potion removed');
+      } catch (err) {
+        toast('❌ Failed to delete', true);
+      }
+    };
+
+    // ============================================================
+    // PAGE: LOOT VALUES
+    // ============================================================
+
+    async function loadLoot() {
+      const tbody = document.getElementById('loot-tbody');
+      try {
+        const q = query(collection(db, 'loot'), orderBy('createdAt', 'desc'));
+        onSnapshot(q, (snapshot) => {
+          if (snapshot.empty) {
+            tbody.innerHTML = `<tr><td colspan="4">${emptyState('💎', 'No items yet. Add one above!')}</td></tr>`;
+            return;
+          }
+          tbody.innerHTML = snapshot.docs.map(d => {
+            const item = d.data();
+            return `
+              <tr>
+                <td>
+                  <div class="loot-item-name">
+                    <span>${escHtml(item.icon || '📦')}</span>
+                    ${escHtml(item.itemName)}
+                  </div>
+                </td>
+                <td><span class="loot-value">${escHtml(item.value)}</span></td>
+                <td><span class="loot-notes">${escHtml(item.notes || '—')}</span></td>
+                <td>
+                  <button class="btn btn-danger btn-sm" onclick="deleteLoot('${d.id}')">🗑</button>
+                </td>
+              </tr>`;
+          }).join('');
+        });
+      } catch (err) {
+        console.error('loadLoot error:', err);
+        tbody.innerHTML = `<tr><td colspan="4">${emptyState('⚠️', 'Could not load item values.')}</td></tr>`;
+      }
+    }
+
+    window.addLootItem = async function() {
+      const itemName = document.getElementById('loot-item').value.trim();
+      const icon     = document.getElementById('loot-icon').value.trim() || '📦';
+      const value    = document.getElementById('loot-value').value.trim();
+      const notes    = document.getElementById('loot-notes').value.trim();
+
+      if (!itemName || !value) { toast('⚠️ Item name and value are required', true); return; }
+
+      try {
+        await addDoc(collection(db, 'loot'), {
+          itemName, icon, value, notes,
+          createdAt: serverTimestamp()
+        });
+        document.getElementById('loot-item').value  = '';
+        document.getElementById('loot-icon').value  = '';
+        document.getElementById('loot-value').value = '';
+        document.getElementById('loot-notes').value = '';
+        toast('💾 Item saved!');
+      } catch (err) {
+        console.error('addLootItem error:', err);
+        toast('❌ Failed to save', true);
+      }
+    };
+
+    window.deleteLoot = async function(id) {
+      if (!confirm('Remove this item?')) return;
+      try {
+        await deleteDoc(doc(db, 'loot', id));
+        toast('🗑 Item removed');
+      } catch (err) {
+        toast('❌ Failed to delete', true);
+      }
+    };
+
+    // ============================================================
+    // PAGE: PLAY SESSION PLANNER
+    // ============================================================
+
+    async function loadSessions() {
+      const container = document.getElementById('session-list');
+      try {
+        const q = query(collection(db, 'sessions'), orderBy('date'), orderBy('time'));
+        onSnapshot(q, (snapshot) => {
+          if (snapshot.empty) {
+            container.innerHTML = emptyState('📅', 'No sessions planned yet. Add yours above!');
+            return;
+          }
+          // Group by date
+          const byDate = {};
+          snapshot.docs.forEach(d => {
+            const s = { id: d.id, ...d.data() };
+            if (!byDate[s.date]) byDate[s.date] = [];
+            byDate[s.date].push(s);
+          });
+
+          let html = '';
+          for (const date in byDate) {
+            const dateLabel = new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+            html += `<h4 style="font-size:0.78rem;color:var(--text-muted);margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">${dateLabel}</h4>`;
+            html += '<div class="session-list">';
+            html += byDate[date].map(s => `
+              <div class="session-card">
+                <div class="session-player">${escHtml(s.playerName)}</div>
+                <div class="session-datetime">🕐 ${escHtml(s.time || 'Time TBD')}</div>
+                ${s.note ? `<div class="session-note">💬 ${escHtml(s.note)}</div>` : ''}
+                <div class="card-actions">
+                  <button class="btn btn-danger btn-sm" onclick="deleteSession('${s.id}')">🗑</button>
+                </div>
+              </div>`).join('');
+            html += '</div>';
+          }
+          container.innerHTML = html;
+        });
+      } catch (err) {
+        console.error('loadSessions error:', err);
+        container.innerHTML = emptyState('⚠️', 'Could not load sessions.');
+      }
+    }
+
+    window.addSession = async function() {
+      const playerName = document.getElementById('session-player').value.trim();
+      const date       = document.getElementById('session-date').value;
+      const time       = document.getElementById('session-time').value;
+      const note       = document.getElementById('session-note').value.trim();
+
+      if (!playerName || !date) { toast('⚠️ Username and date are required', true); return; }
+
+      try {
+        await addDoc(collection(db, 'sessions'), {
+          playerName, date, time, note,
+          createdAt: serverTimestamp()
+        });
+        document.getElementById('session-player').value = '';
+        document.getElementById('session-date').value   = '';
+        document.getElementById('session-time').value   = '';
+        document.getElementById('session-note').value   = '';
+        toast('📅 Session added!');
+      } catch (err) {
+        console.error('addSession error:', err);
+        toast('❌ Failed to add session', true);
+      }
+    };
+
+    window.deleteSession = async function(id) {
+      if (!confirm('Remove this session?')) return;
+      try {
+        await deleteDoc(doc(db, 'sessions', id));
+        toast('🗑 Session removed');
+      } catch (err) {
+        toast('❌ Failed to remove', true);
+      }
+    };
+
+    // ============================================================
+    // UTILITY: escape HTML to prevent XSS
+    // ============================================================
+    function escHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // ============================================================
+    // INITIALISE — load all data when page first loads
+    // ============================================================
+    (function init() {
+      // Set today's date as default for forms
+      const today = new Date().toISOString().split('T')[0];
+      const dateInputs = ['event-date', 'session-date'];
+      dateInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = today;
+      });
+
+      // Render static potion grid immediately (no Firestore needed)
+      renderStaticPotions();
+
+      // Load all Firestore collections
+      loadPlayers();
+      loadEvents();
+      loadBounties();
+      loadCustomPotions();
+      loadLoot();
+      loadSessions();
+    })();
+
+  </script>
+
+</body>
+</html>
