@@ -1969,7 +1969,7 @@
   async function laadSessies() {
     const container = document.getElementById('sessie-lijst');
     try {
-      const q = query(collection(db, 'sessies'), orderBy('datum'), orderBy('tijd'));
+      const q = query(collection(db, 'sessies'), orderBy('aangemaaktOp', 'desc'));
       onSnapshot(q, (snap) => {
         if (snap.empty) {
           container.innerHTML = legeStaat('📅', 'Nog geen sessies gepland. Voeg de jouwe toe!');
