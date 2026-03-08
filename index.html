@@ -805,37 +805,7 @@
       color: var(--gold);
     }
     .bounty-meta { font-size: 0.76rem; color: var(--text-muted); margin-bottom: 6px; }
-    .bounty-reason { font-size: 0.83rem; color: var(--text-muted); line-height: 1.5; }
-
-    /* ================================================================
-       POTIONS
-       ================================================================ */
-    .potion-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 13px;
-    }
-    .potion-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 15px;
-      transition: border-color var(--tr), box-shadow var(--tr);
-    }
-    .potion-card:hover { border-color: var(--purple); box-shadow: 0 0 12px var(--purple-glow); }
-    .potion-header { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
-    .potion-icon { font-size: 1.9rem; }
-    .potion-name { font-family: var(--font-vt); font-size: 1.2rem; color: var(--purple); }
-    .potion-ingredients { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 7px; line-height: 1.5; }
-    .potion-effect {
-      font-size: 0.8rem;
-      color: var(--text);
-      background: var(--bg3);
-      border-radius: var(--radius);
-      padding: 5px 9px;
-    }
-
-    /* ================================================================
+    .bounty-reason { font-size: 0.83rem; color: var(--text-muted); line-height: 1.5; }/* ================================================================
        ITEM WAARDEN
        ================================================================ */
     .loot-table {
@@ -933,7 +903,6 @@
       .page { padding: 18px 15px; }
       .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
       .form-row { grid-template-columns: 1fr; }
-      .potion-grid { grid-template-columns: 1fr; }
       .session-grid { grid-template-columns: 1fr; }
       .loot-table th, .loot-table td { padding: 9px 10px; }
     }
@@ -1011,11 +980,6 @@
     <li class="nav-item">
       <button onclick="navigate('guide')" id="nav-guide">
         <span class="nav-icon">📗</span> Farm Guide
-      </button>
-    </li>
-    <li class="nav-item">
-      <button onclick="navigate('potions')" id="nav-potions">
-        <span class="nav-icon">🧪</span> Drankjes
       </button>
     </li>
     <li class="nav-item">
@@ -1145,22 +1109,7 @@
         <h3>Farm Guide</h3>
         <p>YouTube tutorials voor farms</p>
       </div>
-      <div class="dash-card" onclick="navigate('potions')">
-        <div class="di">🧪</div>
-        <h3>Drankjes</h3>
-        <p>Brouwrecepten en effecten</p>
       </div>
-      <div class="dash-card" onclick="navigate('loot')">
-        <div class="di">💎</div>
-        <h3>Item Waarden</h3>
-        <p>Economie prijslijst</p>
-      </div>
-      <div class="dash-card" onclick="navigate('planner')">
-        <div class="di">📅</div>
-        <h3>Speelplanner</h3>
-        <p>Wanneer ben jij online?</p>
-      </div>
-    </div>
   </section>
 
   <!-- ============================================================
@@ -1382,60 +1331,6 @@
   </section>
 
   <!-- ============================================================
-       PAGINA: DRANKJES GIDS
-       ============================================================ -->
-  <section class="page" id="page-potions">
-    <div class="page-header">
-      <div class="page-icon">🧪</div>
-      <h2>Drankjes Gids</h2>
-      <p>Alle brouwrecepten en effecten. Je hebt een brouwstandaard + Vuurkruitpoeder nodig.</p>
-    </div>
-
-    <div class="info-box">
-      💡 <strong>Basis:</strong> Waterles → voeg <strong>Netherwrat</strong> toe voor Ongemakkelijk drankje → voeg dan het ingredient hieronder toe.
-    </div>
-
-    <!-- Statische drankjes (altijd zichtbaar) -->
-    <div class="potion-grid" id="statische-potions"></div>
-
-    <hr class="divider" />
-
-    <!-- Admin: eigen drankje toevoegen -->
-    <div class="admin-only">
-      <button class="toggle-form-btn" onclick="toggleForm('voeg-potion-form')">
-        ➕ Drankje Toevoegen
-      </button>
-      <div class="collapsible-form" id="voeg-potion-form">
-        <div class="form-panel">
-          <h3>Nieuw Drankje</h3>
-          <div class="form-row">
-            <div class="field">
-              <label>Naam</label>
-              <input type="text" id="potion-naam" placeholder="bijv. Drankje van Geluk" />
-            </div>
-            <div class="field">
-              <label>Emoji Icoon</label>
-              <input type="text" id="potion-icoon" placeholder="🍀" maxlength="4" />
-            </div>
-          </div>
-          <div class="field">
-            <label>Ingrediënten</label>
-            <input type="text" id="potion-ingredienten" placeholder="bijv. Ongemakkelijk + Appel" />
-          </div>
-          <div class="field">
-            <label>Effect</label>
-            <input type="text" id="potion-effect" placeholder="bijv. Geluk I voor 5 minuten" />
-          </div>
-          <button class="btn btn-primary" onclick="voegPotionToe()">💾 Opslaan</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Aangepaste drankjes uit Firestore -->
-    <div id="eigen-potions-lijst"></div>
-  </section>
-
-  <!-- ============================================================
        PAGINA: ITEM WAARDEN
        ============================================================ -->
   <section class="page" id="page-loot">
@@ -1564,6 +1459,8 @@
     getAuth,
     onAuthStateChanged,
     signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     GoogleAuthProvider,
@@ -1718,17 +1615,37 @@
     return fouten[code] || '❌ Fout: ' + code;
   }
 
-  // Google inloggen
+  // Google inloggen — probeer popup, bij blokkering gebruik redirect
   window.inloggenGoogle = async function() {
     try {
-      await signInWithPopup(auth, provider);
-      sluitLoginModal();
-      toast('✅ Ingelogd met Google!');
+      const result = await signInWithPopup(auth, provider);
+      if (result.user) {
+        sluitLoginModal();
+        toast('✅ Ingelogd met Google!');
+      }
     } catch (e) {
-      console.error('Google auth fout:', e.code, e.message);
-      toonAuthFout(vertaalAuthFout(e.code));
+      console.error('Google popup fout:', e.code, e.message);
+      if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+        // Popup geblokkeerd — gebruik redirect als fallback
+        try {
+          await signInWithRedirect(auth, provider);
+        } catch (e2) {
+          toonAuthFout(vertaalAuthFout(e2.code));
+        }
+      } else {
+        toonAuthFout(vertaalAuthFout(e.code));
+      }
     }
   };
+
+  // Controleer redirect resultaat bij laden van de pagina
+  getRedirectResult(auth).then((result) => {
+    if (result && result.user) {
+      toast('✅ Ingelogd met Google!');
+    }
+  }).catch((e) => {
+    console.error('Redirect result fout:', e.code, e.message);
+  });
 
   // E-mail inloggen
   window.inloggenEmail = async function() {
@@ -2147,101 +2064,6 @@
       toast('❌ Verwijderen mislukt', true);
     }
   };
-
-  // ---------------------------------------------------------------
-  // PAGINA: DRANKJES
-  // ---------------------------------------------------------------
-
-  // Statische drankjes (hardcoded, altijd zichtbaar)
-  const STATISCHE_DRANKJES = [
-    { icoon:'🩺', naam:'Genezing',            ingredienten:'Ongemakkelijk + Glinsternde Meloen',  effect:'Herstelt direct 4 ❤ (Genezing II: 8 ❤)' },
-    { icoon:'☠️', naam:'Vergif',               ingredienten:'Ongemakkelijk + Spinnoog',             effect:'Geeft gifschade over tijd (geen dood)' },
-    { icoon:'🔥', naam:'Vuurbestendigheid',    ingredienten:'Ongemakkelijk + Magmacrème',           effect:'Volledig immuun voor vuur en lava, 3 min' },
-    { icoon:'💨', naam:'Snelheid',             ingredienten:'Ongemakkelijk + Suiker',               effect:'Bewegingsbonus +20% voor 3 min' },
-    { icoon:'🌙', naam:'Nachtzicht',           ingredienten:'Ongemakkelijk + Gouden Wortel',        effect:'Volledige helderheid in het donker, 3 min' },
-    { icoon:'🌊', naam:'Waterademhaling',      ingredienten:'Ongemakkelijk + Kogelvis',             effect:'Ademen onder water voor 3 min' },
-    { icoon:'🦅', naam:'Springen',             ingredienten:'Ongemakkelijk + Konijnenvoet',         effect:'Sprongbonus — spring ~1,5 blokken hoger' },
-    { icoon:'💪', naam:'Kracht',               ingredienten:'Ongemakkelijk + Vuurkruitpoeder',      effect:'+130% schade bij aanval, 3 min' },
-    { icoon:'👻', naam:'Onzichtbaarheid',      ingredienten:'Nachtzicht + Vergist Spinnoog',        effect:'Onzichtbaar voor mobs en spelers' },
-    { icoon:'⚡', naam:'Regeneratie',          ingredienten:'Ongemakkelijk + Ghast-traan',          effect:'Regenereer ❤ elke 2,5 seconden' },
-    { icoon:'🛡️', naam:'Zacht Vallen',         ingredienten:'Ongemakkelijk + Vleermuiszenuwmembraan', effect:'Val langzaam, geen valschade' },
-    { icoon:'🫀', naam:'Schade',               ingredienten:'Genezing + Vergist Spinnoog',          effect:'Brengt direct 6 ❤ schade toe' },
-    { icoon:'🧊', naam:'Schildpadsmeester',    ingredienten:'Ongemakkelijk + Schildpadschelp',      effect:'Weerstand IV + Traagheid IV, 20 sec' },
-    { icoon:'🐢', naam:'Traagheid',            ingredienten:'Snelheid + Vergist Spinnoog',          effect:'Vermindert bewegingssnelheid met 15%' },
-  ];
-
-  function renderStatischeDrankjes() {
-    const grid = document.getElementById('statische-potions');
-    grid.innerHTML = STATISCHE_DRANKJES.map(p => `
-      <div class="potion-card">
-        <div class="potion-header">
-          <div class="potion-icon">${p.icoon}</div>
-          <div class="potion-name">Drankje van ${p.naam}</div>
-        </div>
-        <div class="potion-ingredients">🧂 <strong>Ingrediënten:</strong> ${esc(p.ingredienten)}</div>
-        <div class="potion-effect">✨ ${esc(p.effect)}</div>
-      </div>
-    `).join('');
-  }
-
-  async function laadEigenDrankjes() {
-    const container = document.getElementById('eigen-potions-lijst');
-    try {
-      const q = query(collection(db, 'drankjes'), orderBy('aangemaaktOp', 'desc'));
-      onSnapshot(q, (snap) => {
-        if (snap.empty) { container.innerHTML = ''; return; }
-        container.innerHTML =
-          '<h3 style="font-family:var(--font-px);font-size:.58rem;color:var(--text-muted);margin:18px 0 13px">Eigen Drankjes</h3>' +
-          '<div class="potion-grid">' +
-          snap.docs.map(d => {
-            const p = d.data();
-            return `
-              <div class="potion-card">
-                <div class="potion-header">
-                  <div class="potion-icon">${esc(p.icoon || '🧪')}</div>
-                  <div class="potion-name">${esc(p.naam)}</div>
-                </div>
-                <div class="potion-ingredients">🧂 <strong>Ingrediënten:</strong> ${esc(p.ingredienten)}</div>
-                <div class="potion-effect">✨ ${esc(p.effect)}</div>
-                ${isAdmin ? `<div class="card-actions"><button class="btn btn-danger btn-sm" onclick="verwijderDrankje('${d.id}')">🗑</button></div>` : ''}
-              </div>`;
-          }).join('') + '</div>';
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  window.voegPotionToe = async function() {
-    if (!isAdmin) { toast('❌ Geen toegang', true); return; }
-    const naam         = document.getElementById('potion-naam').value.trim();
-    const icoon        = document.getElementById('potion-icoon').value.trim() || '🧪';
-    const ingredienten = document.getElementById('potion-ingredienten').value.trim();
-    const effect       = document.getElementById('potion-effect').value.trim();
-    if (!naam || !ingredienten || !effect) { toast('⚠️ Alle velden zijn verplicht', true); return; }
-    try {
-      await addDoc(collection(db, 'drankjes'), { naam, icoon, ingredienten, effect, aangemaaktOp: serverTimestamp() });
-      document.getElementById('potion-naam').value         = '';
-      document.getElementById('potion-icoon').value        = '';
-      document.getElementById('potion-ingredienten').value = '';
-      document.getElementById('potion-effect').value       = '';
-      toast('🧪 Drankje toegevoegd!');
-    } catch (e) {
-      toast('❌ Opslaan mislukt', true);
-    }
-  };
-
-  window.verwijderDrankje = async function(id) {
-    if (!isAdmin) return;
-    if (!confirm('Drankje verwijderen?')) return;
-    try {
-      await deleteDoc(doc(db, 'drankjes', id));
-      toast('🗑 Drankje verwijderd');
-    } catch (e) {
-      toast('❌ Verwijderen mislukt', true);
-    }
-  };
-
   // ---------------------------------------------------------------
   // PAGINA: ITEM WAARDEN
   // ---------------------------------------------------------------
@@ -2397,8 +2219,6 @@
       if (el) el.value = vandaag;
     });
 
-    // Statische drankjes renderen (geen Firestore nodig)
-    renderStatischeDrankjes();
 
     // Alle Firestore-data laden
     laadSpelers();
@@ -2406,7 +2226,6 @@
     laadEvents();
     laadVideos();
     laadBounties();
-    laadEigenDrankjes();
     laadLoot();
     laadSessies();
   })();
