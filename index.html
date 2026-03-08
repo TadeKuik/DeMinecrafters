@@ -357,9 +357,14 @@
     .btn-google svg { width: 18px; height: 18px; }
     #login-error {
       color: var(--red);
-      font-size: 0.78rem;
-      margin-top: 8px;
+      font-size: 0.8rem;
+      margin-top: 12px;
       display: none;
+      background: var(--red-glow);
+      border: 1px solid var(--red);
+      border-radius: var(--radius);
+      padding: 10px 13px;
+      line-height: 1.6;
     }
     /* tabs email/register */
     .auth-tabs {
@@ -1574,13 +1579,13 @@
   // Config
   // ---------------------------------------------------------------
   const firebaseConfig = {
-    apiKey:            "AIzaSyBHmq2hPEyb2z89XIR4y-FlKJYpSObh8Iw",
-    authDomain:        "printsome-b5197.firebaseapp.com",
-    projectId:         "printsome-b5197",
-    storageBucket:     "printsome-b5197.firebasestorage.app",
-    messagingSenderId: "558794337754",
-    appId:             "1:558794337754:web:324c537a347d6e0991a4e3",
-    measurementId:     "G-TL2RN2TRLR"
+    apiKey:            "AIzaSyDrlYGT8PkyppA8LqnN9CS95NY7_sr7ev0",
+    authDomain:        "deminecrafters-18a6c.firebaseapp.com",
+    projectId:         "deminecrafters-18a6c",
+    storageBucket:     "deminecrafters-18a6c.firebasestorage.app",
+    messagingSenderId: "1005130786656",
+    appId:             "1:1005130786656:web:3a4bb1e549bc1747d6a005",
+    measurementId:     "G-CNSX50H16L"
   };
 
   const app      = initializeApp(firebaseConfig);
@@ -1693,6 +1698,26 @@
     el.style.display = 'block';
   }
 
+  // Vertaal Firebase foutcodes naar begrijpelijke Nederlandse meldingen
+  function vertaalAuthFout(code) {
+    const fouten = {
+      'auth/unauthorized-domain':        '❌ Dit domein is niet toegestaan in Firebase. Voeg het toe via Firebase Console → Authentication → Settings → Authorized domains.',
+      'auth/operation-not-allowed':      '❌ Deze inlogmethode is niet ingeschakeld. Ga naar Firebase Console → Authentication → Sign-in method en zet Google/E-mail aan.',
+      'auth/popup-blocked':              '❌ De popup werd geblokkeerd door je browser. Sta popups toe voor deze site.',
+      'auth/popup-closed-by-user':       'Popup gesloten. Probeer opnieuw.',
+      'auth/cancelled-popup-request':    'Popup geannuleerd.',
+      'auth/user-not-found':             '❌ Geen account gevonden met dit e-mailadres.',
+      'auth/wrong-password':             '❌ Verkeerd wachtwoord.',
+      'auth/invalid-email':              '❌ Ongeldig e-mailadres.',
+      'auth/email-already-in-use':       '❌ Dit e-mailadres is al in gebruik.',
+      'auth/weak-password':              '❌ Wachtwoord is te zwak (minimaal 6 tekens).',
+      'auth/too-many-requests':          '❌ Te veel pogingen. Probeer het later opnieuw.',
+      'auth/network-request-failed':     '❌ Geen internetverbinding.',
+      'auth/invalid-credential':         '❌ Verkeerde inloggegevens. Controleer je e-mail en wachtwoord.',
+    };
+    return fouten[code] || '❌ Fout: ' + code;
+  }
+
   // Google inloggen
   window.inloggenGoogle = async function() {
     try {
@@ -1700,13 +1725,14 @@
       sluitLoginModal();
       toast('✅ Ingelogd met Google!');
     } catch (e) {
-      toonAuthFout('Google inloggen mislukt: ' + e.message);
+      console.error('Google auth fout:', e.code, e.message);
+      toonAuthFout(vertaalAuthFout(e.code));
     }
   };
 
   // E-mail inloggen
   window.inloggenEmail = async function() {
-    const email    = document.getElementById('login-email').value.trim();
+    const email      = document.getElementById('login-email').value.trim();
     const wachtwoord = document.getElementById('login-password').value;
     if (!email || !wachtwoord) { toonAuthFout('Vul e-mail en wachtwoord in.'); return; }
     try {
@@ -1714,13 +1740,14 @@
       sluitLoginModal();
       toast('✅ Ingelogd!');
     } catch (e) {
-      toonAuthFout('Inloggen mislukt. Controleer je gegevens.');
+      console.error('Email login fout:', e.code, e.message);
+      toonAuthFout(vertaalAuthFout(e.code));
     }
   };
 
   // Registreren
   window.registreren = async function() {
-    const email    = document.getElementById('reg-email').value.trim();
+    const email      = document.getElementById('reg-email').value.trim();
     const wachtwoord = document.getElementById('reg-password').value;
     if (!email || !wachtwoord) { toonAuthFout('Vul e-mail en wachtwoord in.'); return; }
     try {
@@ -1728,7 +1755,8 @@
       sluitLoginModal();
       toast('✅ Account aangemaakt en ingelogd!');
     } catch (e) {
-      toonAuthFout('Registreren mislukt: ' + (e.code === 'auth/email-already-in-use' ? 'E-mail al in gebruik.' : e.message));
+      console.error('Registreer fout:', e.code, e.message);
+      toonAuthFout(vertaalAuthFout(e.code));
     }
   };
 
