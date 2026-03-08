@@ -806,41 +806,6 @@
     }
     .bounty-meta { font-size: 0.76rem; color: var(--text-muted); margin-bottom: 6px; }
     .bounty-reason { font-size: 0.83rem; color: var(--text-muted); line-height: 1.5; }/* ================================================================
-       ITEM WAARDEN
-       ================================================================ */
-    .loot-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-    }
-    .loot-table th {
-      background: var(--bg3);
-      text-align: left;
-      padding: 11px 15px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      border-bottom: 1px solid var(--border);
-    }
-    .loot-table td {
-      padding: 11px 15px;
-      font-size: 0.86rem;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-    .loot-table tr:last-child td { border-bottom: none; }
-    .loot-table tr:hover td { background: var(--bg3); }
-    .loot-item-name { display: flex; align-items: center; gap: 9px; font-weight: 700; }
-    .loot-item-name span { font-size: 1.15rem; }
-    .loot-value { font-family: var(--font-vt); font-size: 1.1rem; color: var(--gold); }
-    .loot-notes { font-size: 0.75rem; color: var(--text-muted); }
-
-    /* ================================================================
        SPEELPLANNER
        ================================================================ */
     .session-grid {
@@ -904,7 +869,6 @@
       .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
       .form-row { grid-template-columns: 1fr; }
       .session-grid { grid-template-columns: 1fr; }
-      .loot-table th, .loot-table td { padding: 9px 10px; }
     }
     @media (max-width: 400px) {
       .dashboard-grid { grid-template-columns: 1fr; }
@@ -980,11 +944,6 @@
     <li class="nav-item">
       <button onclick="navigate('guide')" id="nav-guide">
         <span class="nav-icon">📗</span> Farm Guide
-      </button>
-    </li>
-    <li class="nav-item">
-      <button onclick="navigate('loot')" id="nav-loot">
-        <span class="nav-icon">💎</span> Item Waarden
       </button>
     </li>
   </ul>
@@ -1327,66 +1286,6 @@
 
     <div id="bounty-lijst">
       <div class="spinner"></div>
-    </div>
-  </section>
-
-  <!-- ============================================================
-       PAGINA: ITEM WAARDEN
-       ============================================================ -->
-  <section class="page" id="page-loot">
-    <div class="page-header">
-      <div class="page-icon">💎</div>
-      <h2>Item Waarden</h2>
-      <p>Geschatte servereconomie-waarden. Gebruik dit als referentie bij handelen.</p>
-    </div>
-
-    <!-- Admin: item toevoegen -->
-    <div class="admin-only">
-      <button class="toggle-form-btn" onclick="toggleForm('voeg-loot-form')">
-        ➕ Item Toevoegen
-      </button>
-      <div class="collapsible-form" id="voeg-loot-form">
-        <div class="form-panel">
-          <h3>Nieuw Item</h3>
-          <div class="form-row">
-            <div class="field">
-              <label>Itemnaam</label>
-              <input type="text" id="loot-item" placeholder="bijv. Netherite Baar" />
-            </div>
-            <div class="field">
-              <label>Emoji</label>
-              <input type="text" id="loot-icoon" placeholder="🔱" maxlength="4" />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="field">
-              <label>Waarde</label>
-              <input type="text" id="loot-waarde" placeholder="bijv. 64 Diamanten" />
-            </div>
-            <div class="field">
-              <label>Notities</label>
-              <input type="text" id="loot-notities" placeholder="bijv. Prijs schommelt" />
-            </div>
-          </div>
-          <button class="btn btn-primary" onclick="voegLootToe()">💾 Opslaan</button>
-        </div>
-      </div>
-    </div>
-
-    <div style="overflow-x:auto;">
-      <table class="loot-table">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Waarde</th>
-            <th>Notities</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="loot-tbody">
-          <tr><td colspan="4"><div class="spinner"></div></td></tr>
-        </tbody>
-      </table>
     </div>
   </section>
 
@@ -2065,72 +1964,6 @@
     }
   };
   // ---------------------------------------------------------------
-  // PAGINA: ITEM WAARDEN
-  // ---------------------------------------------------------------
-  async function laadLoot() {
-    const tbody = document.getElementById('loot-tbody');
-    try {
-      const q = query(collection(db, 'loot'), orderBy('aangemaaktOp', 'desc'));
-      onSnapshot(q, (snap) => {
-        if (snap.empty) {
-          tbody.innerHTML = `<tr><td colspan="4">${legeStaat('💎', 'Nog geen items. Admin kan er één toevoegen.')}</td></tr>`;
-          return;
-        }
-        tbody.innerHTML = snap.docs.map(d => {
-          const item = d.data();
-          return `
-            <tr>
-              <td>
-                <div class="loot-item-name">
-                  <span>${esc(item.icoon || '📦')}</span>
-                  ${esc(item.item)}
-                </div>
-              </td>
-              <td><span class="loot-value">${esc(item.waarde)}</span></td>
-              <td><span class="loot-notes">${esc(item.notities || '—')}</span></td>
-              <td>
-                ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="verwijderLoot('${d.id}')">🗑</button>` : ''}
-              </td>
-            </tr>`;
-        }).join('');
-      });
-    } catch (e) {
-      console.error(e);
-      tbody.innerHTML = `<tr><td colspan="4">${legeStaat('⚠️', 'Kon items niet laden.')}</td></tr>`;
-    }
-  }
-
-  window.voegLootToe = async function() {
-    if (!isAdmin) { toast('❌ Geen toegang', true); return; }
-    const item     = document.getElementById('loot-item').value.trim();
-    const icoon    = document.getElementById('loot-icoon').value.trim() || '📦';
-    const waarde   = document.getElementById('loot-waarde').value.trim();
-    const notities = document.getElementById('loot-notities').value.trim();
-    if (!item || !waarde) { toast('⚠️ Naam en waarde zijn verplicht', true); return; }
-    try {
-      await addDoc(collection(db, 'loot'), { item, icoon, waarde, notities, aangemaaktOp: serverTimestamp() });
-      document.getElementById('loot-item').value     = '';
-      document.getElementById('loot-icoon').value    = '';
-      document.getElementById('loot-waarde').value   = '';
-      document.getElementById('loot-notities').value = '';
-      toast('💎 Item opgeslagen!');
-    } catch (e) {
-      toast('❌ Opslaan mislukt', true);
-    }
-  };
-
-  window.verwijderLoot = async function(id) {
-    if (!isAdmin) return;
-    if (!confirm('Item verwijderen?')) return;
-    try {
-      await deleteDoc(doc(db, 'loot', id));
-      toast('🗑 Item verwijderd');
-    } catch (e) {
-      toast('❌ Verwijderen mislukt', true);
-    }
-  };
-
-  // ---------------------------------------------------------------
   // PAGINA: SPEELPLANNER
   // ---------------------------------------------------------------
   async function laadSessies() {
@@ -2226,7 +2059,6 @@
     laadEvents();
     laadVideos();
     laadBounties();
-    laadLoot();
     laadSessies();
   })();
 
